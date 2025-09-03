@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-// 1. Define types for the weather data we expect
 interface WeatherData {
   display_name: string;
   hourly: {
@@ -12,7 +11,7 @@ interface WeatherData {
 }
 
 export default function App() {
-  const [city, setCity] = useState("Hyderabad"); // default city
+  const [city, setCity] = useState("Hyderabad");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,7 +22,7 @@ export default function App() {
       setError(null);
       setWeather(null);
 
-      // Step 1: Get latitude/longitude of city using Nominatim
+      // Step 1: Get latitude/longitude of city
       const geoRes = await fetch(
         `${import.meta.env.VITE_GEOCODE_URL}${cityName}`
       );
@@ -44,15 +43,12 @@ export default function App() {
       if (!res.ok) throw new Error("Failed to fetch weather data");
 
       const data = await res.json();
-      setWeather({
-        display_name,
-        hourly: data.hourly,
-      });
+      setWeather({ ...data, display_name });
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Unknown error occurred");
+        setError(String(err));
       }
     } finally {
       setLoading(false);
@@ -74,7 +70,6 @@ export default function App() {
     <div className="justify-center text-center bg-amber-50 min-h-screen p-5">
       <h1 className="text-shadow-2xs text-2xl font-bold mb-4">🌤️ Weather Cast</h1>
 
-      {/* Search Form */}
       <form onSubmit={handleSubmit} className="mb-5">
         <input
           className="w-40 shadow-2xl bg-amber-50 border p-2 rounded-md mr-2"
@@ -105,8 +100,11 @@ export default function App() {
           <ul className="text-sm mt-2">
             {weather.hourly.time.slice(0, 5).map((time: string, i: number) => (
               <li key={i}>
-                {new Date(time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} —{" "}
-                {weather.hourly.temperature_2m[i]}°C,{" "}
+                {new Date(time).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}{" "}
+                — {weather.hourly.temperature_2m[i]}°C,{" "}
                 {weather.hourly.precipitation_probability[i]}% rain,{" "}
                 {weather.hourly.rain[i]} mm rainfall
               </li>
