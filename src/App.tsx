@@ -1,12 +1,23 @@
 import { useEffect, useState } from "react";
 
+// 1. Define types for the weather data we expect
+interface WeatherData {
+  display_name: string;
+  hourly: {
+    temperature_2m: number[];
+    precipitation_probability: number[];
+    rain: number[];
+    time: string[];
+  };
+}
+
 export default function App() {
   const [city, setCity] = useState("Hyderabad"); // default city
-  const [weather, setWeather] = useState(null);
-  const [error, setError] = useState(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function loadWeather(cityName) {
+  async function loadWeather(cityName: string) {
     try {
       setLoading(true);
       setError(null);
@@ -33,9 +44,16 @@ export default function App() {
       if (!res.ok) throw new Error("Failed to fetch weather data");
 
       const data = await res.json();
-      setWeather({ ...data, display_name });
-    } catch (err) {
-      setError(err.message);
+      setWeather({
+        display_name,
+        hourly: data.hourly,
+      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -45,7 +63,7 @@ export default function App() {
     loadWeather(city);
   }, []);
 
-  function handleSubmit(e) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (city.trim()) {
       loadWeather(city);
@@ -85,7 +103,7 @@ export default function App() {
 
           <h2 className="mt-3 font-bold">Next 5 Hours</h2>
           <ul className="text-sm mt-2">
-            {weather.hourly.time.slice(0, 5).map((time, i) => (
+            {weather.hourly.time.slice(0, 5).map((time: string, i: number) => (
               <li key={i}>
                 {new Date(time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} —{" "}
                 {weather.hourly.temperature_2m[i]}°C,{" "}
